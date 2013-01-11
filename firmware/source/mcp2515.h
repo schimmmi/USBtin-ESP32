@@ -55,6 +55,20 @@
 #define MCP2515_REG_BFPCTRL 0x0C
 #define MCP2515_REG_CANINTF 0x2C
 #define MCP2515_REG_CANINTE 0x2B
+
+#define MCP2515_REG_RXF0SIDH 0x00
+#define MCP2515_REG_RXF0SIDL 0x01
+#define MCP2515_REG_RXF1SIDH 0x04
+#define MCP2515_REG_RXF1SIDL 0x05
+#define MCP2515_REG_RXF2SIDH 0x08
+#define MCP2515_REG_RXF2SIDL 0x09
+#define MCP2515_REG_RXF3SIDH 0x10
+#define MCP2515_REG_RXF3SIDL 0x11
+#define MCP2515_REG_RXF4SIDH 0x14
+#define MCP2515_REG_RXF4SIDL 0x15
+#define MCP2515_REG_RXF5SIDH 0x18
+#define MCP2515_REG_RXF5SIDL 0x19
+
 #define MCP2515_REG_RXM0SIDH 0x20
 #define MCP2515_REG_RXM0SIDL 0x21
 #define MCP2515_REG_RXM0EID8 0x22
@@ -84,6 +98,8 @@ extern void mcp2515_init();
 extern unsigned char mcp2515_read_register(unsigned char address);
 extern void mcp2515_write_register(unsigned char address, unsigned char data);
 extern void mcp2515_bit_modify(unsigned char address, unsigned char mask, unsigned char data);
+extern void mcp2515_set_SJA1000_filter_mask(unsigned char amr0, unsigned char amr1, unsigned char amr2, unsigned char amr3);
+extern void mcp2515_set_SJA1000_filter_code(unsigned char acr0, unsigned char acr1, unsigned char acr2, unsigned char acr3);
 extern void mcp2515_set_bittiming(unsigned char cnf1, unsigned char cnf2, unsigned char cnf3);
 extern unsigned char mcp2515_send_message(canmsg_t * p_canmsg);
 extern unsigned char mcp2515_rx_status();

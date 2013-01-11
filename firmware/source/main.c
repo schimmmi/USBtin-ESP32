@@ -23,6 +23,8 @@
   Rev   Date        Description
   1.0   2011-12-18  Initial release
   1.1   2012-03-09  Minor fixes, code cleanup
+  1.2   2013-01-11  Added filter function (command 'm' and 'M')
+                    Added write register function (command 'W')
 
  ********************************************************************/
 
@@ -48,7 +50,7 @@
 
 #define VERSION_HARDWARE 1
 #define VERSION_FIRMWARE_MAJOR 1
-#define VERSION_FIRMWARE_MINOR 1
+#define VERSION_FIRMWARE_MINOR 2
 
 
 volatile unsigned char state = STATE_CONFIG;
@@ -199,6 +201,16 @@ void parseLine(char * line) {
                 }
             }
             break;
+        case 'W': // Write given MCP2515 register
+            {
+                unsigned long address, data;
+                if (parseHex(&line[1], 2, &address) && parseHex(&line[3], 2, &data)) {
+                    mcp2515_write_register(address, data);
+                    result = CR;
+                }
+
+            }
+            break;
         case 'V': // Get versions
             {
                 usb_putch('V');
@@ -297,6 +309,26 @@ void parseLine(char * line) {
                     result = CR;
                 }
             }
+            break;
+         case 'm': // Set accpetance filter mask
+            if (state == STATE_CONFIG)
+            {
+                unsigned long am0, am1, am2, am3;
+                if (parseHex(&line[1], 2, &am0) && parseHex(&line[3], 2, &am1) && parseHex(&line[5], 2, &am2) && parseHex(&line[7], 2, &am3)) {
+                    mcp2515_set_SJA1000_filter_mask(am0, am1, am2, am3);
+                    result = CR;
+                }
+            } 
+            break;
+         case 'M': // Set accpetance filter code
+            if (state == STATE_CONFIG)
+            {
+                unsigned long ac0, ac1, ac2, ac3;
+                if (parseHex(&line[1], 2, &ac0) && parseHex(&line[3], 2, &ac1) && parseHex(&line[5], 2, &ac2) && parseHex(&line[7], 2, &ac3)) {
+                    mcp2515_set_SJA1000_filter_code(ac0, ac1, ac2, ac3);
+                    result = CR;
+                }
+            } 
             break;
          
     }

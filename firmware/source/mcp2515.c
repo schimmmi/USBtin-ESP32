@@ -132,10 +132,11 @@ void mcp2515_init() {
 
     mcp2515_write_register(MCP2515_REG_CANCTRL, 0x85); // set config mode, clock prescaling 1:2 and clock output
 
-    // TODO: if mask/filters are used, change these both lines:
-    mcp2515_write_register(MCP2515_REG_RXB0CTRL, 0x60); // turn mask/filters off; receive any message
-    mcp2515_write_register(MCP2515_REG_RXB1CTRL, 0x60); // turn mask/filters off; receive any message
+    // configure filter
+    mcp2515_write_register(MCP2515_REG_RXB0CTRL, 0x00); // use filter for standard and extended frames
+    mcp2515_write_register(MCP2515_REG_RXB1CTRL, 0x00); // use filter for standard and extended frames
 
+    // initialize filter mask
     mcp2515_write_register(MCP2515_REG_RXM0SIDH, 0x00);
     mcp2515_write_register(MCP2515_REG_RXM0SIDL, 0x00);
     mcp2515_write_register(MCP2515_REG_RXM0EID8, 0x00);
@@ -143,10 +144,73 @@ void mcp2515_init() {
     mcp2515_write_register(MCP2515_REG_RXM1SIDH, 0x00);
     mcp2515_write_register(MCP2515_REG_RXM1SIDL, 0x00);
     mcp2515_write_register(MCP2515_REG_RXM1EID8, 0x00);
-    mcp2515_write_register(MCP2515_REG_RXM1EID0 , 0x00);
+    mcp2515_write_register(MCP2515_REG_RXM1EID0, 0x00);
 
     mcp2515_write_register(MCP2515_REG_CANINTE, 0x03); // RX interrupt
 
+}
+
+/**
+ * \brief Set filter mask of given SJA1000 register values
+ *
+ * \param amr0 Acceptence mask register 0
+ * \param amr1 Acceptence mask register 1
+ * \param amr2 Acceptence mask register 2
+ * \param amr3 Acceptence mask register 3
+ *
+ * This function has only affect if mcp2515 is in configuration mode.
+ * The filter mask is only set for the first 11 bit because of compatibility
+ * issues between SJA1000 and MCP2515.
+ */
+void mcp2515_set_SJA1000_filter_mask(unsigned char amr0, unsigned char amr1, unsigned char amr2, unsigned char amr3) {
+
+    // SJA1000 mask bit definition: 1 = accept without matching, 0 = do matching with acceptance code
+    // MCP2515 mask bit definition: 0 = accept without matching, 1 = do matching with acceptance filter
+    // -> invert mask
+
+    // mask for filter 1
+    mcp2515_write_register(MCP2515_REG_RXM0SIDH, ~amr0);
+    mcp2515_write_register(MCP2515_REG_RXM0SIDL, (~amr1) & 0xE0);
+    mcp2515_write_register(MCP2515_REG_RXM0EID8, 0x00);
+    mcp2515_write_register(MCP2515_REG_RXM0EID0, 0x00);
+
+    // mask for filter 2
+    mcp2515_write_register(MCP2515_REG_RXM1SIDH, ~amr2);
+    mcp2515_write_register(MCP2515_REG_RXM1SIDL, (~amr3) & 0xE0);
+    mcp2515_write_register(MCP2515_REG_RXM1EID8, 0x00);
+    mcp2515_write_register(MCP2515_REG_RXM1EID0, 0x00);
+
+}
+
+/**
+ * \brief Set filter code of given SJA1000 register values
+ *
+ * \param amr0 Acceptence code register 0
+ * \param amr1 Acceptence code register 1
+ * \param amr2 Acceptence code register 2
+ * \param amr3 Acceptence code register 3
+ *
+ * This function has only affect if mcp2515 is in configuration mode.
+ */
+void mcp2515_set_SJA1000_filter_code(unsigned char acr0, unsigned char acr1, unsigned char acr2, unsigned char acr3) {
+
+    // acceptance code for filter 1
+    mcp2515_write_register(MCP2515_REG_RXF0SIDH, acr0);
+    mcp2515_write_register(MCP2515_REG_RXF0SIDL, (acr1) & 0xE0); // standard
+    mcp2515_write_register(MCP2515_REG_RXF1SIDH, acr0);
+    mcp2515_write_register(MCP2515_REG_RXF1SIDL, ((acr1) & 0xE0) | 0x80); // extended
+
+    // acceptance code for filter 2
+    mcp2515_write_register(MCP2515_REG_RXF2SIDH, acr2);
+    mcp2515_write_register(MCP2515_REG_RXF2SIDL, (acr3) & 0xE0); // standard
+    mcp2515_write_register(MCP2515_REG_RXF3SIDH, acr2);
+    mcp2515_write_register(MCP2515_REG_RXF3SIDL, ((acr3) & 0xE0) | 0x80); // extended
+
+    // fill remaining filters with zero
+    mcp2515_write_register(MCP2515_REG_RXF4SIDH, 0x00);
+    mcp2515_write_register(MCP2515_REG_RXF4SIDL, 0x00);
+    mcp2515_write_register(MCP2515_REG_RXF5SIDH, 0x00);
+    mcp2515_write_register(MCP2515_REG_RXF5SIDL, 0x00);
 }
 
 

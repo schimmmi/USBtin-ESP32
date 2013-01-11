@@ -1,8 +1,12 @@
 <HtermSequenceFile>
     <ItemList>
-        <SequenceItem name="Get Version">
+        <SequenceItem name="Get HW/FW-Version">
             <description></description>
             <sequence value="h[56] h[0D]" />
+        </SequenceItem>
+        <SequenceItem name="Get FW-Version">
+            <description></description>
+            <sequence value="h[76] h[0D]" />
         </SequenceItem>
         <SequenceItem name="Set Baudrate 10k">
             <description></description>
@@ -52,9 +56,21 @@
             <description></description>
             <sequence value="h[4F] h[0D]" />
         </SequenceItem>
+        <SequenceItem name="Open CAN channel (listen-only)">
+            <description></description>
+            <sequence value="h[4C] h[0D]" />
+        </SequenceItem>
+        <SequenceItem name="Open CAN channel (loopback)">
+            <description></description>
+            <sequence value="h[6C] h[0D]" />
+        </SequenceItem>
         <SequenceItem name="Close CAN channel">
             <description></description>
             <sequence value="h[43] h[0D]" />
+        </SequenceItem>
+        <SequenceItem name="Get Errorflags">
+            <description></description>
+            <sequence value="h[46] h[0D]" />
         </SequenceItem>
         <SequenceItem name="Example: Transmit standard frame id:0x123, data:0x45,0x67,0x89">
             <description></description>
