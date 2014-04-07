@@ -8,10 +8,10 @@
  handled over this CDC virtual comport.
 
  Authors and Copyright:
- (c) 2012, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -25,6 +25,15 @@
   1.1   2012-03-09  Minor fixes, code cleanup
   1.2   2013-01-11  Added filter function (command 'm' and 'M')
                     Added write register function (command 'W')
+  1.3   2014-04-07  Changed/improved can bit timings
+                    Fixed clock_process() (no blocking)
+                    Fixed extended frames filtering
+                    Added command 'V': return hardware version
+                    Empty both can buffers at same loop cycle
+                    Trigger USB sending in usb_putch
+                    Increased SPI speed to 3 MHz (was 0,75 MHz)
+                    Increased CDC buffer size to 128 (was 100)
+                    Process received characters in a loop
 
  ********************************************************************/
 
@@ -48,9 +57,10 @@
 #define STATE_OPEN 1
 #define STATE_LISTEN 2
 
-#define VERSION_HARDWARE 1
+#define VERSION_HARDWARE_MAJOR 1
+#define VERSION_HARDWARE_MINOR 0
 #define VERSION_FIRMWARE_MAJOR 1
-#define VERSION_FIRMWARE_MINOR 2
+#define VERSION_FIRMWARE_MINOR 3
 
 
 volatile unsigned char state = STATE_CONFIG;
@@ -211,11 +221,11 @@ void parseLine(char * line) {
 
             }
             break;
-        case 'V': // Get versions
+        case 'V': // Get hardware version
             {
                 usb_putch('V');
-                sendByteHex(VERSION_HARDWARE);
-                sendByteHex(VERSION_FIRMWARE_MAJOR);
+                sendByteHex(VERSION_HARDWARE_MAJOR);
+                sendByteHex(VERSION_HARDWARE_MINOR);
                 result = CR;
             }
             break;
@@ -360,7 +370,6 @@ void main(void) {
     
     char line[LINE_MAXLEN];
     unsigned char linepos = 0;
-    unsigned short lastclock = 0;
 
     while (1) {
 
@@ -369,7 +378,7 @@ void main(void) {
         clock_process();
 
         // receive characters from UART and collect the data until end of line is indicated
-        if (usb_chReceived()) {
+        while (usb_chReceived()) {
             unsigned char ch = usb_getch();
 
             if (ch == CR) {
@@ -387,38 +396,40 @@ void main(void) {
         if ((state != STATE_CONFIG) && (hardware_getMCP2515Int())) {
 
             canmsg_t canmsg;
-            mcp2515_receive_message(&canmsg);
-            char type;
-            unsigned char idlen;
-            unsigned short timestamp = clock_getMS();
 
-            if (canmsg.flags.rtr) type = 'r';
-            else type = 't';
+            while (mcp2515_receive_message(&canmsg)) {
+                char type;
+                unsigned char idlen;
+                unsigned short timestamp = clock_getMS();
 
-            if (canmsg.flags.extended) {
-                type -= 'a' - 'A';
-                idlen = 8;
-            } else {
-                idlen = 3;
-            }
+                if (canmsg.flags.rtr) type = 'r';
+                else type = 't';
 
-            usb_putch(type);
-            sendHex(canmsg.id, idlen);
-
-            sendHex(canmsg.length, 1);
-
-            if (!canmsg.flags.rtr) {
-                unsigned char i;
-                for (i = 0; i < canmsg.length; i++) {
-                   sendHex(canmsg.data[i], 2);
+                if (canmsg.flags.extended) {
+                    type -= 'a' - 'A';
+                    idlen = 8;
+                } else {
+                    idlen = 3;
                 }
-            }
 
-            if (timestamping) {
-                sendHex(timestamp, 4);
-            }
+                usb_putch(type);
+                sendHex(canmsg.id, idlen);
 
-            usb_putch(CR);
+                sendHex(canmsg.length, 1);
+ 
+                if (!canmsg.flags.rtr) {
+                    unsigned char i;
+                    for (i = 0; i < canmsg.length; i++) {
+                       sendHex(canmsg.data[i], 2);
+                    }
+                }
+
+                if (timestamping) {
+                     sendHex(timestamp, 4);
+                }
+
+                usb_putch(CR);
+            }
         }        
 
         // led signaling

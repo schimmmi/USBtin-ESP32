@@ -5,10 +5,10 @@
  This file contains the MCP2515 interface definitions.
 
  Authors and Copyright:
- (c) 2012, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -21,15 +21,15 @@
 #define _MCP2515_
 
 // standard timing definitions
-#define MCP2515_TIMINGS_10K  0x3b, 0xb6, 0x04
-#define MCP2515_TIMINGS_20K  0x1d, 0xb6, 0x04
-#define MCP2515_TIMINGS_50K  0x0b, 0xb6, 0x04
-#define MCP2515_TIMINGS_100K 0x05, 0xb6, 0x04
-#define MCP2515_TIMINGS_125K 0x05, 0xac, 0x03
-#define MCP2515_TIMINGS_250K 0x02, 0xac, 0x03
-#define MCP2515_TIMINGS_500K 0x01, 0x9b, 0x02
-#define MCP2515_TIMINGS_800K 0x00, 0xa4, 0x03
-#define MCP2515_TIMINGS_1M   0x00, 0x9b, 0x02
+#define MCP2515_TIMINGS_10K  0xfb, 0xad, 0x06	// PropSeg=6Tq, PS1=6Tq, PS2=7Tq, SamplePoint=65%, SJW=4
+#define MCP2515_TIMINGS_20K  0xdd, 0xad, 0x06   // PropSeg=6Tq, PS1=6Tq, PS2=7Tq, SamplePoint=65%, SJW=4
+#define MCP2515_TIMINGS_50K  0xcb, 0xad, 0x06   // PropSeg=6Tq, PS1=6Tq, PS2=7Tq, SamplePoint=65%, SJW=4
+#define MCP2515_TIMINGS_100K 0xc5, 0xad, 0x06   // PropSeg=6Tq, PS1=6Tq, PS2=7Tq, SamplePoint=65%, SJW=4
+#define MCP2515_TIMINGS_125K 0xc5, 0xa4, 0x04   // PropSeg=5Tq, PS1=5Tq, PS2=5Tq, SamplePoint=68.75%, SJW=4
+#define MCP2515_TIMINGS_250K 0xc2, 0xa4, 0x04	// PropSeg=5Tq, PS1=5Tq, PS2=5Tq, SamplePoint=68.75%, SJW=4
+#define MCP2515_TIMINGS_500K 0xc1, 0x9a, 0x03   // PropSeg=3Tq, PS1=4Tq, PS2=4Tq, SamplePoint=66.67%, SJW=4
+#define MCP2515_TIMINGS_800K 0xc0, 0xa3, 0x04   // PropSeg=4Tq, PS1=5Tq, PS2=5Tq, SamplePoint=66.67%, SJW=4
+#define MCP2515_TIMINGS_1M   0xc0, 0x9a, 0x03   // PropSeg=4Tq, PS1=3Tq, PS2=4Tq, SamplePoint=66.67%, SJW=4
 
 // pin mapping
 #define MCP2515_SS LATCbits.LATC6

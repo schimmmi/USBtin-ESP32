@@ -1,6 +1,6 @@
 <HtermSequenceFile>
     <ItemList>
-        <SequenceItem name="Get HW/FW-Version">
+        <SequenceItem name="Get HW-Version">
             <description></description>
             <sequence value="h[56] h[0D]" />
         </SequenceItem>

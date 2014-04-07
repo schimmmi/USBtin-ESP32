@@ -6,7 +6,7 @@ BOOTLOADER     = mphidflash
 all: $(MAIN).hex
 
 $(MAIN).hex: $(SRC)
-	$(CC) $(SRC) --chip=18F14K50 --CODEOFFSET=1000h --ROM=default,-0-fff
+	$(CC) $(SRC) --chip=18F14K50 --CODEOFFSET=1000h --ROM=default,-0-fff --MODE=free
 
 flash: 
 	$(BOOTLOADER) -write main.hex -reset

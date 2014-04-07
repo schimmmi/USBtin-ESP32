@@ -5,10 +5,10 @@
  This file contains the MCP2515 interface functions.
 
  Authors and Copyright:
- (c) 2012, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -111,7 +111,7 @@ void mcp2515_init() {
 
     // init SPI
     SSPSTAT = 0x40; // CKE=1
-    SSPCON1 = 0x22;
+    SSPCON1 = 0x21; // 3MHz SPI clock
     dummy = SSPBUF; // dummy read to clear BF
     dummy = 0;
 
@@ -198,13 +198,13 @@ void mcp2515_set_SJA1000_filter_code(unsigned char acr0, unsigned char acr1, uns
     mcp2515_write_register(MCP2515_REG_RXF0SIDH, acr0);
     mcp2515_write_register(MCP2515_REG_RXF0SIDL, (acr1) & 0xE0); // standard
     mcp2515_write_register(MCP2515_REG_RXF1SIDH, acr0);
-    mcp2515_write_register(MCP2515_REG_RXF1SIDL, ((acr1) & 0xE0) | 0x80); // extended
+    mcp2515_write_register(MCP2515_REG_RXF1SIDL, ((acr1) & 0xE0) | 0x08); // extended
 
     // acceptance code for filter 2
     mcp2515_write_register(MCP2515_REG_RXF2SIDH, acr2);
     mcp2515_write_register(MCP2515_REG_RXF2SIDL, (acr3) & 0xE0); // standard
     mcp2515_write_register(MCP2515_REG_RXF3SIDH, acr2);
-    mcp2515_write_register(MCP2515_REG_RXF3SIDL, ((acr3) & 0xE0) | 0x80); // extended
+    mcp2515_write_register(MCP2515_REG_RXF3SIDL, ((acr3) & 0xE0) | 0x08); // extended
 
     // fill remaining filters with zero
     mcp2515_write_register(MCP2515_REG_RXF4SIDH, 0x00);

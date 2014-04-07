@@ -8,7 +8,7 @@
  (c) 2012, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -26,5 +26,6 @@ extern unsigned char usb_chReceived();
 extern unsigned char usb_getch();
 extern void usb_init();
 extern void usb_process();
+extern void usb_txprocess();
 
 #endif

@@ -5,10 +5,10 @@
  This file contains the USB CDC functions.
 
  Authors and Copyright:
- (c) 2012, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -227,7 +227,7 @@ const unsigned char usb_string_product[] = {
 
 #define EP_MAX 4
 #define EP_BUFFERSIZE 0x08
-#define TXBUFFER_SIZE 100
+#define TXBUFFER_SIZE 128
 
 volatile EndpointType ep[EP_MAX] @ 0x200;
 volatile unsigned char ep0out_buffer[EP_BUFFERSIZE] @ 0x280;
@@ -337,6 +337,9 @@ void usb_putch(unsigned char ch) {
     txbuffer_writepos++;
     if (txbuffer_writepos == TXBUFFER_SIZE) txbuffer_writepos = 0;
     txbuffer_bytesleft++;
+
+    // trigger sending
+    usb_process();
 }
 
 /**
@@ -456,8 +459,6 @@ void usb_process() {
 
     if (UIRbits.TRNIF) {
         // complete interrupt
-
-            unsigned char i;
 
             if (USTAT == USTAT_EP0_OUT) {
 

@@ -8,7 +8,7 @@
  (c) 2012, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: HI-TECH C PRO for the PIC18 MCU Family (Lite)  V9.65
+ Compiler: Microchip MPLAB XC8 C Compiler V1.20
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -39,12 +39,11 @@ void clock_init() {
  * Handle clock task. Count milliseconds
  */
 void clock_process() {
-    while ((unsigned short) (TMR0 - clock_lastclock) > CLOCK_TIMERTICKS_1MS) {
+    if ((unsigned short) (TMR0 - clock_lastclock) > CLOCK_TIMERTICKS_1MS) {
        clock_lastclock += CLOCK_TIMERTICKS_1MS;
        clock_msticker++;
        if (clock_msticker > 60000) clock_msticker = 0;
     }
-
 }
 
 /**
