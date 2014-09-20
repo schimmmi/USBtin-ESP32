@@ -34,6 +34,7 @@
                     Increased SPI speed to 3 MHz (was 0,75 MHz)
                     Increased CDC buffer size to 128 (was 100)
                     Process received characters in a loop
+  1.4   2014-09-20  Increased bulk transfer packet size (now 64)
 
  ********************************************************************/
 
@@ -60,7 +61,7 @@
 #define VERSION_HARDWARE_MAJOR 1
 #define VERSION_HARDWARE_MINOR 0
 #define VERSION_FIRMWARE_MAJOR 1
-#define VERSION_FIRMWARE_MINOR 3
+#define VERSION_FIRMWARE_MINOR 4
 
 
 volatile unsigned char state = STATE_CONFIG;

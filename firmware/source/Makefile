@@ -1,6 +1,6 @@
 MAIN           = main
 SRC            = main.c usb_cdc.c mcp2515.c clock.c
-CC             = picc18
+CC             = /opt/microchip/xc8/v1.20/bin/xc8
 BOOTLOADER     = mphidflash
 
 all: $(MAIN).hex

@@ -51,6 +51,8 @@
 #define DESCR_INTERFACE 0x04
 #define DESCR_ENDPOINT 0x05
 
+#define EP_BUFFERSIZE_BULK 0x40
+
 typedef struct
 {
     unsigned char stat;
@@ -170,7 +172,7 @@ const unsigned char usb_config_desc[] = {
         DESCR_ENDPOINT,   /* bDescriptorType: Endpoint */
         0x81,   /* bEndpointAddress: (IN1) */
         0x02,   /* bmAttributes: Bulk */
-        0x08,             /* wMaxPacketSize: */
+        EP_BUFFERSIZE_BULK,  /* wMaxPacketSize: */
         0x00,
         0x00    /* bInterval: ignore for Bulk transfer */
 };
@@ -232,9 +234,9 @@ const unsigned char usb_string_product[] = {
 volatile EndpointType ep[EP_MAX] @ 0x200;
 volatile unsigned char ep0out_buffer[EP_BUFFERSIZE] @ 0x280;
 volatile unsigned char ep0in_buffer[EP_BUFFERSIZE] @ 0x288;
-volatile unsigned char ep1in_buffer[EP_BUFFERSIZE] @ 0x290;
 volatile unsigned char ep2in_buffer[EP_BUFFERSIZE] @ 0x298;
 volatile unsigned char ep3out_buffer[EP_BUFFERSIZE] @ 0x2A0;
+volatile unsigned char ep1in_buffer[EP_BUFFERSIZE_BULK] @ 0x2A8;
 
 
 unsigned configured = 0;
@@ -363,7 +365,7 @@ void usb_txprocess() {
     if (ep[1].in.stat & 0x80) return;
 
     unsigned char count = txbuffer_bytesleft;
-    if (count > EP_BUFFERSIZE - 1) count = EP_BUFFERSIZE - 1;
+    if (count > EP_BUFFERSIZE_BULK - 1) count = EP_BUFFERSIZE_BULK - 1;
 
     unsigned char readpos = (TXBUFFER_SIZE + txbuffer_writepos - txbuffer_bytesleft) % TXBUFFER_SIZE;    
 
@@ -426,8 +428,8 @@ void usb_init() {
     ep[0].in.adrh = 0x02;
 
     ep[1].in.stat = 0x40;
-    ep[1].in.cnt = EP_BUFFERSIZE;
-    ep[1].in.adrl = 0x90;
+    ep[1].in.cnt = EP_BUFFERSIZE_BULK;
+    ep[1].in.adrl = 0xA8;
     ep[1].in.adrh = 0x02;
 
     ep[2].in.stat = 0;
