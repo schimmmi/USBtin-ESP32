@@ -19,6 +19,7 @@
  ********************************************************************/
 
 #include <htc.h>
+#include "clock.h"
 #include "mcp2515.h"
 
 /**
@@ -228,7 +229,6 @@ void mcp2515_set_bittiming(unsigned char cnf1, unsigned char cnf2, unsigned char
     mcp2515_write_register(MCP2515_REG_CNF1, cnf1);
     mcp2515_write_register(MCP2515_REG_CNF2, cnf2);
     mcp2515_write_register(MCP2515_REG_CNF3, cnf3);
-
 }
 
 /**
@@ -281,9 +281,11 @@ unsigned char mcp2515_send_message(canmsg_t * p_canmsg) {
 
     unsigned char status = mcp2515_read_status();
     unsigned char address;
+    unsigned char length;
 
     // check length
-    if (p_canmsg->length > 8) return 0;
+    length = p_canmsg->dlc;
+    if (length > 8) length = 8;
 
     // get offest address of next free tx buffer
     if ((status & 0x04) == 0) {
@@ -316,11 +318,11 @@ unsigned char mcp2515_send_message(canmsg_t * p_canmsg) {
 
     // length and data
     if (p_canmsg->flags.rtr) {
-        spi_transmit(p_canmsg->length | 0x40);
+        spi_transmit(p_canmsg->dlc | 0x40);
     } else {
-        spi_transmit(p_canmsg->length);
+        spi_transmit(p_canmsg->dlc);
         unsigned char i;
-        for (i = 0; i < p_canmsg->length; i++) {
+        for (i = 0; i < length; i++) {
             spi_transmit(p_canmsg->data[i]);
         }
     }
@@ -360,6 +362,10 @@ unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
         return 0;
     }
 
+    // store timestamp
+    p_canmsg->timestamp = clock_getMS();
+    
+    // store flags
     p_canmsg->flags.rtr = (status >> 3) & 0x01;
     p_canmsg->flags.extended = (status >> 4) & 0x01;
 
@@ -383,10 +389,12 @@ unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
     }
 
     // get length and data
-    p_canmsg->length = spi_transmit(0xff) & 0x0f;
+    p_canmsg->dlc = spi_transmit(0xff) & 0x0f;
     if (!p_canmsg->flags.rtr) {
         unsigned char i;
-        for (i = 0; i < p_canmsg->length; i++) {
+        unsigned char length = p_canmsg->dlc;
+        if (length > 8) length = 8;
+        for (i = 0; i < length; i++) {
             p_canmsg->data[i] = spi_transmit(0xff);
         }
     }

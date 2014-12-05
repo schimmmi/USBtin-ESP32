@@ -89,8 +89,9 @@ typedef struct
        unsigned char extended : 1;	// extended identifier
     } flags;
 
-    unsigned char length;		// data length
+    unsigned char dlc;                  // data length code
     unsigned char data[8];		// payload data
+    unsigned short timestamp;           // timestamp
 } canmsg_t;
 
 // function prototypes

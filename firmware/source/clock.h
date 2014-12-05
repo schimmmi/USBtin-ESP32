@@ -27,5 +27,7 @@ extern unsigned short clock_getMS();
 extern void clock_reset();
 
 #define CLOCK_TIMERTICKS_1MS 375
+#define CLOCK_TIMERTICKS_100MS 37500
+
 
 #endif
