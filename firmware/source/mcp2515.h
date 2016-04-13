@@ -5,10 +5,10 @@
  This file contains the MCP2515 interface definitions.
 
  Authors and Copyright:
- (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -55,6 +55,9 @@
 #define MCP2515_REG_BFPCTRL 0x0C
 #define MCP2515_REG_CANINTF 0x2C
 #define MCP2515_REG_CANINTE 0x2B
+#define MCP2515_REG_TXB0CTR 0x30
+#define MCP2515_REG_TXB1CTR 0x40
+#define MCP2515_REG_TXB2CTR 0x50
 
 #define MCP2515_REG_RXF0SIDH 0x00
 #define MCP2515_REG_RXF0SIDL 0x01

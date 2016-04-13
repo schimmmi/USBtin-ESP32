@@ -5,10 +5,10 @@
  This file contains the frontend interface functions.
 
  Authors and Copyright:
- (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -216,7 +216,14 @@ void parseLine(char * line) {
         case 'N': // Get serial number
             {
                 usb_putch('N');
-                sendHex(0xFFFF, 4);
+                if (usb_serialNumberAvailable()) {
+                    usb_putch(usb_string_serial[10]);
+                    usb_putch(usb_string_serial[12]);
+                    usb_putch(usb_string_serial[14]);
+                    usb_putch(usb_string_serial[16]);
+                } else {
+                    sendHex(0xFFFF, 4);
+                }
                 result = CR;
             }
             break;     

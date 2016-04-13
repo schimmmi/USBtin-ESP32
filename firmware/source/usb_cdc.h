@@ -5,10 +5,10 @@
  This file contains the USB CDC definitions.
 
  Authors and Copyright:
- (c) 2012, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -29,5 +29,8 @@ extern void usb_process();
 extern void usb_txprocess();
 unsigned char usb_ep1_ready();
 void usb_ep1_flush();
+unsigned char usb_serialNumberAvailable();
+
+const unsigned char usb_string_serial[] @ 0x0300;
 
 #endif

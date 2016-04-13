@@ -5,10 +5,10 @@
  This file contains global project definitions.
 
  Authors and Copyright:
- (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -37,6 +37,9 @@
                     CDC/putch writes directly to USB ram
                     Printout of can messages within state-machine
                     Fixed handling of messages with DLC > 8
+  1.6   2016-04-13  Fixed order of outgoing messages (TX fifo)
+                    Added support for usb serial number string
+                    Handle "halt endpoint" usb command
 
  ********************************************************************/
 #ifndef _USBTIN_
@@ -45,7 +48,7 @@
 #define VERSION_HARDWARE_MAJOR 1
 #define VERSION_HARDWARE_MINOR 0
 #define VERSION_FIRMWARE_MAJOR 1
-#define VERSION_FIRMWARE_MINOR 5
+#define VERSION_FIRMWARE_MINOR 6
 
 #define CANMSG_BUFFERSIZE 8
 
@@ -58,6 +61,5 @@ volatile unsigned char state;
 #define hardware_setLED(value) LATBbits.LATB5 = value
 #define hardware_getBLSwitch() !PORTAbits.RA3
 #define hardware_getMCP2515Int() !PORTCbits.RC2
-
 
 #endif

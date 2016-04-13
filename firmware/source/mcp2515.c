@@ -5,10 +5,10 @@
  This file contains the MCP2515 interface functions.
 
  Authors and Copyright:
- (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -21,6 +21,9 @@
 #include <htc.h>
 #include "clock.h"
 #include "mcp2515.h"
+
+/** current transmit buffer priority */
+unsigned char txprio = 3;
 
 /**
  * \brief Transmit one byte over SPI bus
@@ -270,7 +273,6 @@ unsigned char mcp2515_rx_status() {
     return status;
 }
 
-
 /**
  * \brief Send given CAN message
  *
@@ -281,23 +283,55 @@ unsigned char mcp2515_send_message(canmsg_t * p_canmsg) {
 
     unsigned char status = mcp2515_read_status();
     unsigned char address;
+    unsigned char ctrlreg;
     unsigned char length;
 
     // check length
     length = p_canmsg->dlc;
     if (length > 8) length = 8;
-
-    // get offest address of next free tx buffer
-    if ((status & 0x04) == 0) {
-        address = 0x00;
-    } else if ((status & 0x10) == 0) {
-        address = 0x02;
-    } else if ((status & 0x40) == 0) {
-        address = 0x04;
-    } else {
-        // no free transmit buffer
-        return 0;
+    
+    // do some priority fiddling to get fifo behavior
+    switch (status & 0x54) {
+        
+        case 0x00:
+            // all three buffers free
+            ctrlreg = MCP2515_REG_TXB2CTR;
+            address = 0x04;            
+            txprio = 3;
+            break;
+            
+        case 0x40:
+        case 0x44:
+            ctrlreg = MCP2515_REG_TXB1CTR;
+            address = 0x02;            
+            break;
+            
+        case 0x10:
+        case 0x50:
+            ctrlreg = MCP2515_REG_TXB0CTR;
+            address = 0x00;
+            break;
+            
+        case 0x04:
+        case 0x14:         
+            ctrlreg = MCP2515_REG_TXB2CTR;
+            address = 0x04;
+            
+            if (txprio == 0) {
+                // set priority of buffer 1 and buffer 0 to highest
+                mcp2515_bit_modify(MCP2515_REG_TXB1CTR, 0x03, 0x03);
+                mcp2515_bit_modify(MCP2515_REG_TXB0CTR, 0x03, 0x03);
+                txprio = 2;
+            } else {
+                txprio--;
+            }            
+            break;
+            
+        default:
+            // no free transmit buffer
+            return 0;           
     }
+    
 
     // pull SS to low level
     MCP2515_SS = 0;
@@ -332,13 +366,9 @@ unsigned char mcp2515_send_message(canmsg_t * p_canmsg) {
 
     _delay(1);
 
-    // pull SS to low level
-    MCP2515_SS = 0;
-    if (address == 0) address = 1;
-    spi_transmit(MCP2515_CMD_RTS | address);
-    // release SS
-    MCP2515_SS = 1;
-
+    // request message to be transmitted
+    mcp2515_write_register(ctrlreg, txprio | 0x08);
+        
     return 1;
 }
 
@@ -351,8 +381,8 @@ unsigned char mcp2515_send_message(canmsg_t * p_canmsg) {
 unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
 
     unsigned char status = mcp2515_rx_status();
-    unsigned char address;
-
+    unsigned char address;    
+    
     if (status & 0x40) {
         address = 0x00;
     } else if (status & 0x80) {

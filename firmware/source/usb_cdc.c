@@ -5,10 +5,10 @@
  This file contains the USB CDC functions.
 
  Authors and Copyright:
- (c) 2012-2014, Thomas Fischl <tfischl@gmx.de>
+ (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.20
+ Compiler: Microchip MPLAB XC8 C Compiler V1.34
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -52,6 +52,10 @@
 #define DESCR_INTERFACE 0x04
 #define DESCR_ENDPOINT 0x05
 
+#define USB_DEV_DESC_SERIALNUMBER_OFFSET 16
+#define USB_STRING_SERIALNUMBER_INDEX 3
+#define USB_STRING_SERIALNUMBER_SIZE 18
+
 #define EP_BUFFERSIZE_BULK 0x40
 
 typedef struct
@@ -86,6 +90,12 @@ typedef struct
 #define USBRQ_TYPE_CLASS        (1<<5)
 #define USBRQ_TYPE_VENDOR       (2<<5)
 
+#define USBRQ_RECIPIENT_MASK    0x1f
+#define USBRQ_RECIPIENT_DEVICE  0x00
+#define USBRQ_RECIPIENT_INTERFACE 0x01
+#define USBRQ_RECIPIENT_ENDPOINT 0x02
+#define USBRQ_RECIPIENT_OTHER   0x03
+
 const unsigned char usb_dev_desc[] = {
 	18,
 	0x01,
@@ -99,7 +109,7 @@ const unsigned char usb_dev_desc[] = {
 	0x00, 0x01, // device release
 	0x01, // manuf string
 	0x02, // product string
-	0x00, // serial number string
+	0x00, // serial number string (if number available, index 3 is set on the fly)
 	0x01
 };
 
@@ -238,7 +248,6 @@ const unsigned char usb_string_product[] = {
 };
 
 
-
 #define EP_BUFFERSIZE 0x08
 
 volatile BDT epbd[EPBD_NROF] @ 0x200;
@@ -264,6 +273,15 @@ unsigned char dolinecoding = 0;
 unsigned char current_ep1_buffer = EVEN;
 unsigned char current_ep3_buffer = EVEN;
 unsigned char nosend_counter = 0;
+unsigned char usb_ep0status[2] = {0, 0};
+
+/**
+ * Determine if serial number is available
+ * @return 0 if no number available
+ */
+unsigned char usb_serialNumberAvailable() {
+    return ((usb_string_serial[0] == USB_STRING_SERIALNUMBER_SIZE) && (usb_string_serial[1] == 0x03));
+}
 
 /**
  * Process pending send activity
@@ -277,7 +295,10 @@ void usb_sendProcess() {
 
     unsigned char i;
     for (i = 0; i < length; i++) {
-        ep0in_buffer[i] = *usb_sendbuffer;
+
+        if ((usb_sendbuffer == usb_dev_desc + USB_DEV_DESC_SERIALNUMBER_OFFSET) && usb_serialNumberAvailable()) ep0in_buffer[i] = USB_STRING_SERIALNUMBER_INDEX;
+        else ep0in_buffer[i] = *usb_sendbuffer;
+
         usb_sendbuffer ++;
         usb_sendleft--;
     }
@@ -329,6 +350,7 @@ unsigned char usb_handleDescriptorRequest(unsigned char type, unsigned char inde
                 case 0: return usb_loadDescriptor(usb_string_0, sizeof(usb_string_0), length);
                 case 1: return usb_loadDescriptor(usb_string_manuf, sizeof(usb_string_manuf), length);            
                 case 2: return usb_loadDescriptor(usb_string_product, sizeof(usb_string_product), length);            
+                case 3: return usb_loadDescriptor(usb_string_serial, USB_STRING_SERIALNUMBER_SIZE, length);            
             }
     }
 
@@ -520,18 +542,19 @@ void usb_process() {
 		                            epbd[EPBD_EP0_IN].stat = 0xCC; // Stall
                                         }
 		                        break;
+                                
 		                    case REQUEST_SET_ADDRESS:
 
 		                        usb_setaddress = ep0out_buffer[2];
 
 		                        epbd[EPBD_EP0_IN].cnt = 0;
 		                        epbd[EPBD_EP0_IN].stat = 0xC8;
-
 		                        break;
+                                
 		                    case REQUEST_SET_CONFIGURATION:
 
 		                        usb_config = ep0out_buffer[2];
-                                        configured = 1;
+                                configured = 1;
 		                        epbd[EPBD_EP0_IN].cnt = 0;
 		                        epbd[EPBD_EP0_IN].stat = 0xC8;
 		                        break;
@@ -540,28 +563,54 @@ void usb_process() {
 
 		                        ep0in_buffer[0] = usb_config;
 		                        epbd[EPBD_EP0_IN].cnt = 1;                         
-                                        epbd[EPBD_EP0_IN].stat = 0xC8;    
+                                epbd[EPBD_EP0_IN].stat = 0xC8;    
 		                        break;
 
 		                    case REQUEST_GET_INTERFACE:
 
 		                        ep0in_buffer[0] = 0;
 		                        epbd[EPBD_EP0_IN].cnt = 1;                         
-                                        epbd[EPBD_EP0_IN].stat = 0xC8;    
+                                epbd[EPBD_EP0_IN].stat = 0xC8;    
 		                        break;
-
-                                    case REQUEST_SYNCH_FRAME:
-                                    case REQUEST_GET_STATUS:
-                                        ep0in_buffer[0] = 0;
-                                        ep0in_buffer[1] = 0;
+                                
+                            case REQUEST_GET_STATUS:
+                                if ((ep0out_buffer[0] & USBRQ_RECIPIENT_MASK) == USBRQ_RECIPIENT_ENDPOINT) {
+                                    ep0in_buffer[0] = usb_ep0status[0];
+                                    ep0in_buffer[1] = usb_ep0status[1];
+                                } else {
+                                    ep0in_buffer[0] = 0;
+                                    ep0in_buffer[1] = 0;
+                                }
+                                epbd[EPBD_EP0_IN].cnt = 2;
+		                        epbd[EPBD_EP0_IN].stat = 0xC8;
+                                break;
+                                
+                            case REQUEST_SET_FEATURE:
+                                if ((ep0out_buffer[0] & USBRQ_RECIPIENT_MASK) == USBRQ_RECIPIENT_ENDPOINT) {
+                                    if (ep0out_buffer[2] == 0x00) // HALT
+                                        usb_ep0status[0] = 1;
+                                }
+                                epbd[EPBD_EP0_IN].cnt = 0;
+		                        epbd[EPBD_EP0_IN].stat = 0xC8;
+		                        break;                                
+                                
+                            case REQUEST_CLEAR_FEATURE:
+                                if ((ep0out_buffer[0] & USBRQ_RECIPIENT_MASK) == USBRQ_RECIPIENT_ENDPOINT) {
+                                    usb_ep0status[0] = 0;                                    
+                                }
+                                epbd[EPBD_EP0_IN].cnt = 0;
+		                        epbd[EPBD_EP0_IN].stat = 0xC8;
+		                        break;                                
+                                
+                            case REQUEST_SYNCH_FRAME:
+                                ep0in_buffer[0] = 0;
+                                ep0in_buffer[1] = 0;
 		                        epbd[EPBD_EP0_IN].cnt = 2;
 		                        epbd[EPBD_EP0_IN].stat = 0xC8;
-                                        break;
+                                break;
 
-                                    case REQUEST_SET_INTERFACE:
-                                    case REQUEST_CLEAR_FEATURE:
-                                    case REQUEST_SET_FEATURE:
-                                        epbd[EPBD_EP0_IN].cnt = 0;
+                            case REQUEST_SET_INTERFACE:
+                                epbd[EPBD_EP0_IN].cnt = 0;
 		                        epbd[EPBD_EP0_IN].stat = 0xC8;
 		                        break;
 		                    default:		                                       
