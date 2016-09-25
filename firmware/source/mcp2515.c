@@ -25,6 +25,9 @@
 /** current transmit buffer priority */
 unsigned char txprio = 3;
 
+/** current rollover ping-pong buffer */
+unsigned char current_rx_buffer = 0;
+
 /**
  * \brief Transmit one byte over SPI bus
  *
@@ -137,7 +140,7 @@ void mcp2515_init() {
     mcp2515_write_register(MCP2515_REG_CANCTRL, 0x85); // set config mode, clock prescaling 1:2 and clock output
 
     // configure filter
-    mcp2515_write_register(MCP2515_REG_RXB0CTRL, 0x00); // use filter for standard and extended frames
+    mcp2515_write_register(MCP2515_REG_RXB0CTRL, 0x04); // use filter for standard and extended frames, enable rollover
     mcp2515_write_register(MCP2515_REG_RXB1CTRL, 0x00); // use filter for standard and extended frames
 
     // initialize filter mask
@@ -383,10 +386,17 @@ unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
     unsigned char status = mcp2515_rx_status();
     unsigned char address;    
     
-    if (status & 0x40) {
-        address = 0x00;
+    if (status & 0xC0) {
+        // messages in both buffers
+        address = (current_rx_buffer == 0) ? 0x00 : 0x04;
     } else if (status & 0x80) {
+        // message in RXB1
         address = 0x04;
+        current_rx_buffer = 1;
+    } else if (status & 0x40) {
+        // message in RXB0
+        address = 0x00;
+        current_rx_buffer = 0;
     } else {
         // no message in receive buffer
         return 0;
@@ -431,6 +441,13 @@ unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
 
     // release SS
     MCP2515_SS = 1;
+
+    status = mcp2515_rx_status();
+    if (current_rx_buffer == 1) {
+        current_rx_buffer = 0;
+    } else if (status & 0x80) {
+        current_rx_buffer = 1;
+    }
 
     return 1;
 }
