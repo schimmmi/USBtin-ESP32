@@ -432,9 +432,5 @@ unsigned char mcp2515_receive_message(canmsg_t * p_canmsg) {
     // release SS
     MCP2515_SS = 1;
 
-    if (address == 0) address = 1;
-    else address = 2;
-    mcp2515_bit_modify(MCP2515_REG_CANINTF, address, 0);
-
     return 1;
 }
