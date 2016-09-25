@@ -76,11 +76,9 @@ void main(void) {
         clock_process();
 
         // handles interrupt requests of MCP2515 controller: receive message and store it to buffer
-        if ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE)) {
-            if (mcp2515_receive_message(&canmsg_buffer[canmsg_buffer_canpos])) {
-                canmsg_buffer_canpos = (canmsg_buffer_canpos + 1) % CANMSG_BUFFERSIZE;
-                canmsg_buffer_filled++;                
-            }
+        while ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE) && mcp2515_receive_message(&canmsg_buffer[canmsg_buffer_canpos])) {
+            canmsg_buffer_canpos = (canmsg_buffer_canpos + 1) % CANMSG_BUFFERSIZE;
+            canmsg_buffer_filled++;
         }        
                 
         // process can messages in receive buffer
@@ -91,6 +89,7 @@ void main(void) {
                 rxstep = 0;
                 canmsg_buffer_usbpos = (canmsg_buffer_usbpos + 1) % CANMSG_BUFFERSIZE;
                 canmsg_buffer_filled--;
+                break;
             }
         }
         
