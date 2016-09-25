@@ -32,6 +32,18 @@
 
 volatile unsigned char state = STATE_CONFIG;
 
+# define CANMSG_BUFFERSIZE_HALF (CANMSG_BUFFERSIZE / 2)
+
+canmsg_t canmsg_buffer_0[CANMSG_BUFFERSIZE_HALF];
+canmsg_t canmsg_buffer_1[CANMSG_BUFFERSIZE_HALF];
+
+canmsg_t * canmsg_buffer_at(unsigned char linear_pos) {
+    if (linear_pos < CANMSG_BUFFERSIZE_HALF) {
+        return &canmsg_buffer_0[linear_pos];
+    }
+    return &canmsg_buffer_1[linear_pos - CANMSG_BUFFERSIZE_HALF];
+}
+
 /**
  * Main function. Entry point for USBtin application.
  * Handles initialization and the the main processing loop.
@@ -59,7 +71,6 @@ void main(void) {
     unsigned char linepos = 0;
     
     // buffer for incoming can messages
-    canmsg_t canmsg_buffer[CANMSG_BUFFERSIZE];
     unsigned char canmsg_buffer_filled = 0;
     unsigned char canmsg_buffer_canpos = 0;
     unsigned char canmsg_buffer_usbpos = 0;
@@ -76,14 +87,14 @@ void main(void) {
         clock_process();
 
         // handles interrupt requests of MCP2515 controller: receive message and store it to buffer
-        while ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE) && mcp2515_receive_message(&canmsg_buffer[canmsg_buffer_canpos])) {
+        while ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE) && mcp2515_receive_message(canmsg_buffer_at(canmsg_buffer_canpos))) {
             canmsg_buffer_canpos = (canmsg_buffer_canpos + 1) % CANMSG_BUFFERSIZE;
             canmsg_buffer_filled++;
         }        
                 
         // process can messages in receive buffer
         while (usb_ep1_ready() && (canmsg_buffer_filled > 0)) {
-            usb_putch(canmsg2ascii_getNextChar(&canmsg_buffer[canmsg_buffer_usbpos], &rxstep));
+            usb_putch(canmsg2ascii_getNextChar(canmsg_buffer_at(canmsg_buffer_usbpos), &rxstep));
             if (rxstep == RX_STEP_FINISHED) {
                 // finished this frame
                 rxstep = 0;
