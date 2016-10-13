@@ -11,7 +11,7 @@
  (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.34
+ Compiler: Microchip MPLAB XC8 C Compiler V1.37
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -31,6 +31,7 @@
 #include "usbtin.h"
 
 volatile unsigned char state = STATE_CONFIG;
+
 
 /**
  * Main function. Entry point for USBtin application.
@@ -76,11 +77,10 @@ void main(void) {
         clock_process();
 
         // handles interrupt requests of MCP2515 controller: receive message and store it to buffer
-        if ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE)) {
-            if (mcp2515_receive_message(&canmsg_buffer[canmsg_buffer_canpos])) {
+        while ((state != STATE_CONFIG) && (hardware_getMCP2515Int()) && (canmsg_buffer_filled < CANMSG_BUFFERSIZE) && (mcp2515_receive_message(&canmsg_buffer[canmsg_buffer_canpos]))) {
                 canmsg_buffer_canpos = (canmsg_buffer_canpos + 1) % CANMSG_BUFFERSIZE;
                 canmsg_buffer_filled++;                
-            }
+            
         }        
                 
         // process can messages in receive buffer

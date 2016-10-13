@@ -8,7 +8,7 @@
  (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.34
+ Compiler: Microchip MPLAB XC8 C Compiler V1.37
 
  License:
  This file is open source. You can use it or parts of it in own

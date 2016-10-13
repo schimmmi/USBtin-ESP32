@@ -8,7 +8,7 @@
  (c) 2012-2016, Thomas Fischl <tfischl@gmx.de>
 
  Device: PIC18F14K50
- Compiler: Microchip MPLAB XC8 C Compiler V1.34
+ Compiler: Microchip MPLAB XC8 C Compiler V1.37
 
  License:
  This file is open source. You can use it or parts of it in own
@@ -40,6 +40,10 @@
   1.6   2016-04-13  Fixed order of outgoing messages (TX fifo)
                     Added support for usb serial number string
                     Handle "halt endpoint" usb command
+  1.7   2016-10-13  Fixed initialization of filter registers
+                    Removed manual clearing of the RX flag
+                    Changed main loop priorities
+                    Enabled MCP2515 Rollover                    
 
  ********************************************************************/
 #ifndef _USBTIN_
@@ -48,7 +52,7 @@
 #define VERSION_HARDWARE_MAJOR 1
 #define VERSION_HARDWARE_MINOR 0
 #define VERSION_FIRMWARE_MAJOR 1
-#define VERSION_FIRMWARE_MINOR 6
+#define VERSION_FIRMWARE_MINOR 7
 
 #define CANMSG_BUFFERSIZE 8
 
