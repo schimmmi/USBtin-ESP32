@@ -210,6 +210,14 @@ void parseLine(char * line) {
                 usb_putch('v');
                 sendByteHex(VERSION_FIRMWARE_MAJOR);
                 sendByteHex(VERSION_FIRMWARE_MINOR);
+                usb_putch('-');
+                usb_putch('c');
+                usb_putch('a');
+                usb_putch('r');
+                usb_putch('i');
+                usb_putch('s');
+                usb_putch('t');
+                usb_putch('a');
                 result = CR;
             }
             break;
