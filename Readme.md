@@ -11,9 +11,11 @@ Thanks to Thomas Fischl for this grate work!
 
 ## Toolset needed
 
-* [Arduino  IDE 1.8.8+]: https://www.arduino.cc/	"Arduino  IDE 1.8.8+"
+* [Arduino  IDE 1.8.8+](https://www.arduino.cc/)
 
-* [Arduino core for ESP32 WiFi chip]: https://github.com/espressif/arduino-esp32	"Arduino core for ESP32 WiFi chip"
+* [Arduino core for ESP32 WiFi chip](https://github.com/espressif/arduino-esp32/)
+
+  
 
   
 
